@@ -67,7 +67,7 @@ export function useFgbData<T extends DataShapes>(
             idCol,
             maxFeatures
           ).then(() => {
-            setUpdateHash(Math.random().toString(36).substring(7));
+            setUpdateHash(JSON.stringify({bounds, currZoom}));
           });
         }, debounceTime)
       );
