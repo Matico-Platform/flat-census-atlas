@@ -3,7 +3,6 @@ import { PMTLayer } from '@maticoapp/deck.gl-pmtiles';
 import DeckGL from '@deck.gl/react/typed';
 import { useFgbData } from './useFlatgeobufData';
 import {WebMercatorViewport} from '@deck.gl/core/typed';
-import { number } from 'yargs';
 
 const INITIAL_VIEW_STATE = {
   longitude: -87,

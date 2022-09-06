@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef } from "react";
 import { FeatureCollection, GeoJsonProperties } from "geojson";
+// @ts-ignore
 import { Remote, wrap } from "comlink";
 import { FgbWorker } from "./fgbWorker";
 
