@@ -1077,15 +1077,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@maticoapp/deck.gl-pmtiles@npm:^0.0.7":
-  version: 0.0.7
-  resolution: "@maticoapp/deck.gl-pmtiles@npm:0.0.7"
+"@maticoapp/deck.gl-pmtiles@npm:^0.0.8":
+  version: 0.0.8
+  resolution: "@maticoapp/deck.gl-pmtiles@npm:0.0.8"
   dependencies:
     fflate: ^0.7.3
   peerDependencies:
     deck.gl: ^8.8.9
     pmtiles: ^1.1.0
-  checksum: 84904148a6be9e8de8858ed113504ab72f183f046521ef64f1985eba031434826bc731e4b90a36f99640b8eca58ed87e82b88dfb8982dd901f3d48dfe37040aa
+  checksum: 05940356d5d669f04069fc83cdc531d7780affc14e1faa463f7925c11492a012a9b6437cf9da123c8898c6c24418d435bdcfba9a59d7124e97f182c06fb59ec1
   languageName: node
   linkType: hard
 
@@ -2246,7 +2246,7 @@ __metadata:
   dependencies:
     "@loaders.gl/csv": ^3.2.9
     "@loaders.gl/gis": ^3.2.8
-    "@maticoapp/deck.gl-pmtiles": ^0.0.7
+    "@maticoapp/deck.gl-pmtiles": ^0.0.8
     "@react-stately/color": ^3.1.1
     "@tanstack/react-query": ^4.2.3
     "@types/react": ^18.0.17
