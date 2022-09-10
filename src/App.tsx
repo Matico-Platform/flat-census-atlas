@@ -1,123 +1,156 @@
-import * as React from 'react';
-import { PMTLayer } from '@maticoapp/deck.gl-pmtiles';
-import DeckGL from '@deck.gl/react/typed';
-import { useFgbData } from './useFlatgeobufData';
-import {WebMercatorViewport} from '@deck.gl/core/typed';
+import React, { useState, useMemo } from "react";
+import "./App.css";
+import DeckGL from "@deck.gl/react/typed";
+import { BitmapLayer, GeoJsonLayer } from "@deck.gl/layers/typed";
+import { TileLayer } from "@deck.gl/geo-layers/typed";
+// @ts-ignore
+import { ColorArea, ColorWheel } from "@react-spectrum/color";
+import { parseColor } from "@react-stately/color";
+import { useQuery } from "@tanstack/react-query";
+import { CSVLoader } from "@loaders.gl/csv";
+import { load } from "@loaders.gl/core";
+import { PMTLayer, PMTLoader, useJoinLoader } from "@maticoapp/deck.gl-pmtiles";
 
 const INITIAL_VIEW_STATE = {
-  longitude: -87,
+  longitude: -90,
   latitude: 42,
   zoom: 10,
   pitch: 0,
   bearing: 0,
 };
-
-const NULL_COLOR = [0, 0, 0, 0];
-type color = number[];
-type scheme = {
-  value: number,
-  color: color
-}[]
-const densityScheme: scheme = [
-  {value: 250, color: [255,255,204]},
-  {value: 2000, color: [161,218,180]},
-  {value: 4000, color: [65,182,196]},
-  {value: 8000, color: [44,127,184]},
-  {value: 53000, color: [37,52,148]},
-]
-const populationSchema: scheme = [
-  {value: 800, color: [255,255,204]},
-  {value: 1100, color: [161,218,180]},
-  {value: 1400, color: [65,182,196]},
-  {value: 1800, color: [44,127,184]},
-  {value: 40000, color: [37,52,148]},
+const incomeBreaks = [
+  {value: 19624, color:"#440154"},
+  {value: 26061, color:"#414487"},
+  {value: 32860, color:"#2a788e"},
+  {value: 43794, color:"#22a884"},
+  {value: 652420, color:'#fde725'}
 ]
 
-const getColorfunc = (scheme: scheme) => {
-  return (d: number | string) => {
-    const val = Number(d);
-    if (d === null || isNaN(val)) {
-      return NULL_COLOR
-    }
-    for (let i = 0; i < scheme.length; i++) {
-      if (val < scheme[i].value) {
-        return scheme[i].color;
+const getColorFunc = (breaks: {value:number, color:string}[], format = "rgbArray") => {
+  const normalizedBreaks = breaks.map(({value, color}) => {
+    const normalizedColor = parseColor(color).toFormat('rgb')
+    return {
+    value: value,
+    // @ts-ignore
+    color: [normalizedColor.red, normalizedColor.green, normalizedColor.blue]
+  }})
+
+  return (value: number) => {
+    // @ts-ignore
+    if ([undefined,null].includes(value)) return [20,20,20]
+    for (let i = 0; i < normalizedBreaks.length; i++) {
+      if (value < normalizedBreaks[i].value) {
+        return normalizedBreaks[i].color      
       }
     }
-    return NULL_COLOR
+    return normalizedBreaks.at(-1)?.color
   }
 }
 
-const getPopDensityColor = getColorfunc(densityScheme)
-const getTotalPopulationColor = getColorfunc(populationSchema)
+const incomeScale = getColorFunc(incomeBreaks)
 
 export default function App() {
-  const [currView, setCurrView] = React.useState({
-    bounds: {
-      maxX: 0,
-      maxY: 0,
-      minX: 0,
-      minY: 0,
-    },
-    zoom: 0,
+  const [dataSource, setDataSource] = useState<string>(
+    "https://matico.s3.us-east-2.amazonaws.com/census/block_groups.pmtiles"
+  );
+  const [zoomRange, setZoomRange] = useState<{ start: number; end: number }>({
+    start: 0,
+    end: 10,
+  });
+  const {
+    isLoading,
+    error,
+    data: tableData,
+  } = useQuery(["tableData"], () => load("/percapita_income.csv", CSVLoader, {csv: {header:true, dynamicTyping: false}}));
+
+  let [fill, setFill] = useState(parseColor("hsl(162, 74%, 71%)"));
+  let [, fillHue, fillLightness] = fill.getColorChannels();
+  let [border, setBorder] = useState(parseColor("hsl(0, 0%, 19%)"));
+  let [, borderHue, borderLightness] = border.getColorChannels();
+
+  const joinCbgLoader = useJoinLoader({
+    loader: PMTLoader,
+    shape: "binary",
+    leftId: "GEOID",
+    rightId: "GEOID",
+    tableData,
+    updateTriggers: [isLoading]
   })
 
-  const {
-    data: cbgData,
-    updateHash: cbgDataHash
-  } = useFgbData(
-    `/cbg_pop.fgb`,
-    'dict',
-    currView.bounds,
-    currView.zoom,
-    7,
-    22,
-    500,
-    'GEOID'
-  )
+  if (isLoading) {
+    return (
+      <div style={{position:"absolute", 
+        top:"50%",
+        left:"50%",
+        transform:"translate(-50%, -50%)",
+      }}>
+        <p>loading...</p>
+      </div>
+    )
+  }
 
   const layers = [
+    // new TileLayer({
+    //   data: "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    //   minZoom: 0,
+    //   maxZoom: 19,
+    //   tileSize: 256,
+    //   renderSubLayers: (props) => {
+    //     console.log(props)
+    //     const {
+    //       // @ts-ignore
+    //       bbox: { west, south, east, north },
+    //     } = props.tile;
+
+    //     return new BitmapLayer(props, {
+    //       data: null,
+    //       image: props.data,
+    //       bounds: [west, south, east, north],
+    //     });
+    //   },
+    // }),
+
     new PMTLayer({
-      id: 'pmtiles-layer',
-      data: 'https://matico.s3.us-east-2.amazonaws.com/census/block_groups.pmtiles',
-      maxZoom: 22,
-      minZoom: 7,
+      id: "pmtiles-layer",
+      data: dataSource,
+      // raster: true,
       onClick: (info) => {
         console.log(info);
       },
-
+      maxZoom: zoomRange.end,
+      minZoom: zoomRange.start,
       // @ts-ignore
-      getFillColor: d => getTotalPopulationColor(cbgData?.[d.properties.GEOID]?.TotalPop),
-      getLineColor: [20, 20, 20],
-      stroked: true,
-      filled: true,
+      getFillColor: d => incomeScale(d.properties?.["PerCapitaIncome"]),
+      stroked: false,
       lineWidthMinPixels: 1,
       pickable: true,
-      updateTriggers: {
-        getFillColor: cbgDataHash,
-      }
+      tileSize: 256,
+      loaders: [joinCbgLoader],
+      // renderSubLayers: (props) => {
+      //   console.log(props)
+      //   const {
+      //     // @ts-ignore
+      //     bbox: { west, south, east, north },
+      //   } = props.tile;
+
+      //   return new BitmapLayer(props, {
+      //     data: null,
+      //     image: props.data,
+      //     bounds: [west, south, east, north],
+      //     extensions: []
+      //   });
+      // },
     }),
   ];
 
   return (
-    <DeckGL
-      initialViewState={INITIAL_VIEW_STATE}
-      controller={true}
-      layers={layers}
-      onViewStateChange={({viewState}) => {
-        const viewport = new WebMercatorViewport(viewState);
-        const nw = viewport.unproject([0, 0]);
-        const se = viewport.unproject([viewport.width, viewport.height]);
-        setCurrView({
-          zoom: viewState.zoom,
-          bounds: {
-            minX: nw[0],
-            minY: se[1],
-            maxX: se[0],
-            maxY: nw[1],
-          }
-        })
-      }}
-    />
+    <div style={{ width: "100%", height: "100%" }}>
+      <DeckGL
+        // @ts-ignore
+        initialViewState={INITIAL_VIEW_STATE}
+        controller={true}
+        layers={layers}
+      />
+    </div>
   );
 }
