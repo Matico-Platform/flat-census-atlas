@@ -9,7 +9,7 @@ import { parseColor } from "@react-stately/color";
 import { useQuery } from "@tanstack/react-query";
 import { CSVLoader } from "@loaders.gl/csv";
 import { load } from "@loaders.gl/core";
-import { PMTLayer, PMTLoader, useJoinLoader } from "@maticoapp/deck.gl-pmtiles";
+import { PMTLayer, PMTLoader, useJoinLoader, useJoinData } from "@maticoapp/deck.gl-pmtiles";
 
 const INITIAL_VIEW_STATE = {
   longitude: -90,
@@ -19,28 +19,29 @@ const INITIAL_VIEW_STATE = {
   bearing: 0,
 };
 const incomeBreaks = [
-  {value: 19624, color:"#440154"},
-  {value: 26061, color:"#414487"},
-  {value: 32860, color:"#2a788e"},
-  {value: 43794, color:"#22a884"},
-  {value: 652420, color:'#fde725'}
+  { value: 19624, color: "#440154" },
+  { value: 26061, color: "#414487" },
+  { value: 32860, color: "#2a788e" },
+  { value: 43794, color: "#22a884" },
+  { value: 652420, color: '#fde725' }
 ]
 
-const getColorFunc = (breaks: {value:number, color:string}[], format = "rgbArray") => {
-  const normalizedBreaks = breaks.map(({value, color}) => {
+const getColorFunc = (breaks: { value: number, color: string }[], format = "rgbArray") => {
+  const normalizedBreaks = breaks.map(({ value, color }) => {
     const normalizedColor = parseColor(color).toFormat('rgb')
     return {
-    value: value,
-    // @ts-ignore
-    color: [normalizedColor.red, normalizedColor.green, normalizedColor.blue]
-  }})
+      value: value,
+      // @ts-ignore
+      color: [normalizedColor.red, normalizedColor.green, normalizedColor.blue]
+    }
+  })
 
   return (value: number) => {
     // @ts-ignore
-    if ([undefined,null].includes(value)) return [20,20,20]
+    if ([undefined, null].includes(value)) return [20, 20, 20]
     for (let i = 0; i < normalizedBreaks.length; i++) {
       if (value < normalizedBreaks[i].value) {
-        return normalizedBreaks[i].color      
+        return normalizedBreaks[i].color
       }
     }
     return normalizedBreaks.at(-1)?.color
@@ -61,7 +62,7 @@ export default function App() {
     isLoading,
     error,
     data: tableData,
-  } = useQuery(["tableData"], () => load("/percapita_income.csv", CSVLoader, {csv: {header:true, dynamicTyping: false}}));
+  } = useQuery(["tableData"], () => load("/percapita_income.csv", CSVLoader, { csv: { header: true, dynamicTyping: false } }));
 
   let [fill, setFill] = useState(parseColor("hsl(162, 74%, 71%)"));
   let [, fillHue, fillLightness] = fill.getColorChannels();
@@ -77,18 +78,28 @@ export default function App() {
     updateTriggers: [isLoading]
   })
 
+  const cbgJoiner = useJoinData({
+    shape: "binary",
+    leftId: "GEOID",
+    rightId: "GEOID",
+    tableData,
+    updateTriggers: [isLoading]
+  })
+
+
   if (isLoading) {
     return (
-      <div style={{position:"absolute", 
-        top:"50%",
-        left:"50%",
-        transform:"translate(-50%, -50%)",
+      <div style={{
+        position: "absolute",
+        top: "50%",
+        left: "50%",
+        transform: "translate(-50%, -50%)",
       }}>
         <p>loading...</p>
       </div>
     )
   }
-
+  console.log(navigator.hardwareConcurrency)
   const layers = [
     // new TileLayer({
     //   data: "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -117,6 +128,13 @@ export default function App() {
       onClick: (info) => {
         console.log(info);
       },
+      loadOptions: {
+        pmt: {
+          workerUrl: 'https://unpkg.com/@maticoapp/deck.gl-pmtiles@latest/dist/pmt-worker.js',
+          maxConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 3,
+          maxMobileConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 1,
+        }
+      },
       maxZoom: zoomRange.end,
       minZoom: zoomRange.start,
       // @ts-ignore
@@ -125,21 +143,17 @@ export default function App() {
       lineWidthMinPixels: 1,
       pickable: true,
       tileSize: 256,
-      loaders: [joinCbgLoader],
-      // renderSubLayers: (props) => {
-      //   console.log(props)
-      //   const {
-      //     // @ts-ignore
-      //     bbox: { west, south, east, north },
-      //   } = props.tile;
 
-      //   return new BitmapLayer(props, {
-      //     data: null,
-      //     image: props.data,
-      //     bounds: [west, south, east, north],
-      //     extensions: []
-      //   });
-      // },
+      renderSubLayers: (props) => {
+        if (props?.data) {
+          return new GeoJsonLayer({
+            ...props,
+            data: cbgJoiner(props.data)
+          })
+        } else {
+          return null
+        }
+      },
     }),
   ];
 
