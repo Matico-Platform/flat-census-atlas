@@ -143,11 +143,12 @@ export default function App() {
       lineWidthMinPixels: 1,
       pickable: true,
       tileSize: 256,
-
+      // @ts-ignore
       renderSubLayers: (props) => {
         if (props?.data) {
           return new GeoJsonLayer({
             ...props,
+            // @ts-ignore
             data: cbgJoiner(props.data)
           })
         } else {
