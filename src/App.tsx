@@ -175,7 +175,9 @@ export default function App() {
         left: 0,
         padding: '0 1em 1em 1em',
         background: 'black',
-        textAlign: 'left'
+        color: 'lightgray',
+        textAlign: 'left',
+        maxWidth: '25ch'
       }}>
         <p style={{fontSize:'1rem'}}>
           <b>Census Block Groups</b>
@@ -190,6 +192,7 @@ export default function App() {
             <p style={{ marginLeft: "0.5em", lineHeight: 0 }}>{i === 0 ? `<${value.toLocaleString('en')}` : `${Object.entries(incomeBreaks)[i - 1][1].value.toLocaleString('en')} - ${value.toLocaleString('en')}`}</p>
           </div>
         ))}
+        <p>Data architecture - single file PMtiles and CSV data joined</p>
       </div>
     </div>
   );
