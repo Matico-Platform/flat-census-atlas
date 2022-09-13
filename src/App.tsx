@@ -64,19 +64,19 @@ export default function App() {
     data: tableData,
   } = useQuery(["tableData"], () => load("/percapita_income.csv", CSVLoader, { csv: { header: true, dynamicTyping: false } }));
 
-  let [fill, setFill] = useState(parseColor("hsl(162, 74%, 71%)"));
-  let [, fillHue, fillLightness] = fill.getColorChannels();
-  let [border, setBorder] = useState(parseColor("hsl(0, 0%, 19%)"));
-  let [, borderHue, borderLightness] = border.getColorChannels();
+  // let [fill, setFill] = useState(parseColor("hsl(162, 74%, 71%)"));
+  // let [, fillHue, fillLightness] = fill.getColorChannels();
+  // let [border, setBorder] = useState(parseColor("hsl(0, 0%, 19%)"));
+  // let [, borderHue, borderLightness] = border.getColorChannels();
 
-  const joinCbgLoader = useJoinLoader({
-    loader: PMTLoader,
-    shape: "binary",
-    leftId: "GEOID",
-    rightId: "GEOID",
-    tableData,
-    updateTriggers: [isLoading]
-  })
+  // const joinCbgLoader = useJoinLoader({
+  //   loader: PMTLoader,
+  //   shape: "binary",
+  //   leftId: "GEOID",
+  //   rightId: "GEOID",
+  //   tableData,
+  //   updateTriggers: [isLoading]
+  // })
 
   const cbgJoiner = useJoinData({
     shape: "binary",
@@ -99,7 +99,7 @@ export default function App() {
       </div>
     )
   }
-  console.log(navigator.hardwareConcurrency)
+  // console.log(navigator.hardwareConcurrency)
   const layers = [
     // new TileLayer({
     //   data: "https://c.tile.openstreetmap.org/{z}/{x}/{y}.png",
@@ -125,16 +125,19 @@ export default function App() {
       id: "pmtiles-layer",
       data: dataSource,
       // raster: true,
+      // @ts-ignore
       onClick: (info) => {
         console.log(info);
       },
-      loadOptions: {
-        pmt: {
-          workerUrl: 'https://unpkg.com/@maticoapp/deck.gl-pmtiles@latest/dist/pmt-worker.js',
-          maxConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 3,
-          maxMobileConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 1,
-        }
-      },
+      // loadOptions: {
+      //   pmt: {
+      // worker: false,
+      // workerUrl: 'https://unpkg.com/@maticoapp/deck.gl-pmtiles@latest/dist/pmt-worker.js',
+      // maxConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 3,
+      // maxMobileConcurrency: typeof navigator !== 'undefined' ? (navigator.hardwareConcurrency-1) : 1,
+      //   }
+      // },
+      // loaders: [joinCbgLoader],
       maxZoom: zoomRange.end,
       minZoom: zoomRange.start,
       // @ts-ignore
@@ -166,6 +169,28 @@ export default function App() {
         controller={true}
         layers={layers}
       />
+      <div style={{
+        position: "absolute",
+        top: 0,
+        left: 0,
+        padding: '0 1em 1em 1em',
+        background: 'black',
+        textAlign: 'left'
+      }}>
+        <p style={{fontSize:'1rem'}}>
+          <b>Census Block Groups</b>
+          <br/>
+          Per Capita Income
+          <br/>
+          2019 ACS
+        </p>
+        {Object.entries(incomeBreaks).map(([key, { value, color }], i) => (
+          <div key={key} style={{ display: "flex", alignItems: "center" }}>
+            <div style={{ width: "1em", height: "1em", background: color }}></div>
+            <p style={{ marginLeft: "0.5em", lineHeight: 0 }}>{i === 0 ? `<${value.toLocaleString('en')}` : `${Object.entries(incomeBreaks)[i - 1][1].value.toLocaleString('en')} - ${value.toLocaleString('en')}`}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
