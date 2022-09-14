@@ -65,6 +65,7 @@ export default function App() {
   );
   const tileMap = useRef<{ [key: string]: any }>({});
   const [medianValue, setMedianValue] = useState<number | null>(null);
+  const [countInView, setCountInView] = useState<number | null>(null);
 
   const [zoomRange, setZoomRange] = useState<{ start: number; end: number }>({
     start: 0,
@@ -151,6 +152,7 @@ export default function App() {
           ? inViewValues[Math.floor(inViewValues.length / 2)]
           : null;
         setMedianValue(medianValue);
+        setCountInView(inViewValues?.length);
       },
     }),
   ];
@@ -211,6 +213,23 @@ export default function App() {
               <div>
                 <p>
                   Median value on view: <span ref={countUpRef} />
+                </p>
+              </div>
+            )}
+          </CountUp>
+        )}
+        {countInView !== null && (
+          <CountUp
+            end={countInView}
+            duration={0.5}
+            separator=","
+            decimal=","
+            preserveValue={true}
+          >
+            {({ countUpRef }) => (
+              <div>
+                <p>
+                  Block groups in view: <span ref={countUpRef} />
                 </p>
               </div>
             )}
