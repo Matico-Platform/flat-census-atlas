@@ -17,6 +17,9 @@ import {
 } from "@maticoapp/deck.gl-pmtiles";
 import CountUp from "react-countup";
 
+// @ts-ignore
+const {AnalyticWorker} = new ComlinkWorker<typeof import('./analyticsWorker.ts')>(new URL('./analyticsWorker.ts', import.meta.url));
+
 const INITIAL_VIEW_STATE = {
   longitude: -90,
   latitude: 42,
@@ -132,27 +135,14 @@ export default function App() {
         }
       },
       onViewportLoad: (tiles) => {
-        const allIds = new Set(
-          tiles
-            .map((tile) => {
-              const data = Object.values(tile?.content || {});
-              return data.map((d) =>
-                d?.properties?.length
-                  ? d?.properties?.map((p: any) => p?.GEOID)
-                  : []
-              );
-            })
-            .flat(2)
-        );
-        const inViewValues = tableData
-          ?.filter((f: any) => allIds.has(f.GEOID))
-          .map((m: any) => +m.PerCapitaIncome)
-          .sort();
-        const medianValue = inViewValues?.length
-          ? inViewValues[Math.floor(inViewValues.length / 2)]
-          : null;
-        setMedianValue(medianValue);
-        setCountInView(inViewValues?.length);
+        const data = tiles.map((tile) => {
+          const  data= Object.values(tile?.content || {});
+          return data.map((d) => d?.properties?.length ? d.properties : [])
+        }).flat(2)
+        AnalyticWorker.calculateMedian(data, tableData).then((r: any) => {
+          setMedianValue(r.medianValue);
+          setCountInView(r.count);
+        })
       },
     }),
   ];

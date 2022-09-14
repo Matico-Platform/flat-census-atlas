@@ -2262,6 +2262,7 @@ __metadata:
     react-dom: ^18.2.0
     typescript: ^4.6.4
     vite: ^3.1.0
+    vite-plugin-comlink: ^3.0.4
   languageName: unknown
   linkType: soft
 
@@ -2666,7 +2667,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json5@npm:^2.2.1":
+"json5@npm:2.2.1, json5@npm:^2.2.1":
   version: 2.2.1
   resolution: "json5@npm:2.2.1"
   bin:
@@ -2740,6 +2741,15 @@ __metadata:
   version: 7.14.0
   resolution: "lru-cache@npm:7.14.0"
   checksum: efdd329f2c1bb790b71d497c6c59272e6bc2d7dd060ba55fc136becd3dd31fc8346edb446275504d94cb60d3c8385dbf5267b79b23789e409b2bdf302d13f0d7
+  languageName: node
+  linkType: hard
+
+"magic-string@npm:0.26.2":
+  version: 0.26.2
+  resolution: "magic-string@npm:0.26.2"
+  dependencies:
+    sourcemap-codec: ^1.4.8
+  checksum: b4db4e2b370ac8d9ffc6443a2b591b75364bf1fc9121b5a4068d5b89804abff6709d1fa4a0e0c2d54f2e61e0e44db83efdfe219a5ab0ba6d25ee1f2b51fbed55
   languageName: node
   linkType: hard
 
@@ -3652,6 +3662,19 @@ __metadata:
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 474acf1146cb2701fe3b074892217553dfcf9a031280919ba1b8d651a068c9b15d863b7303cb15bd00a862b498e6cf4ad7b4a08fb134edd5a6f7641681cb54a2
+  languageName: node
+  linkType: hard
+
+"vite-plugin-comlink@npm:^3.0.4":
+  version: 3.0.4
+  resolution: "vite-plugin-comlink@npm:3.0.4"
+  dependencies:
+    json5: 2.2.1
+    magic-string: 0.26.2
+  peerDependencies:
+    comlink: ^4.3.1
+    vite: ">=2.9.6"
+  checksum: fa19d8eb6bb719390fc5eab821c7b5c785a536861115a9a27d94da690f90c99deba2ccd6158c9b5847a3e86fba6e93b35c5fccc5cf67d07359b2ef41263e79dc
   languageName: node
   linkType: hard
 
